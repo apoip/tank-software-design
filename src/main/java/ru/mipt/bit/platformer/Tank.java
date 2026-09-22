@@ -1,93 +1,67 @@
 package ru.mipt.bit.platformer;
 
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.GridPoint2;
-import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Disposable;
-import ru.mipt.bit.platformer.util.TileMovement;
 
-import static com.badlogic.gdx.math.MathUtils.isEqual;
-import static ru.mipt.bit.platformer.util.GdxGameUtils.*;
+public class Tank {
 
-public class Tank implements Disposable {
-
-    private static final float MOVEMENT_SPEED = 0.4f;
-
-    private final Texture texture;
-    private final TextureRegion graphics;
-    private final Rectangle rectangle;
-    private final TileMovement tileMovement;
+    private static final float MOVEMENT_DURATION = 0.4f;
 
     private final GridPoint2 coordinates;
     private final GridPoint2 destinationCoordinates;
 
     private float movementProgress = 1f;
-    private float rotation = 0f;
+    private Direction direction = Direction.RIGHT;
 
-    public Tank(TiledMapTileLayer groundLayer, int x, int y) {
-        texture = new Texture("images/tank_blue.png");
-        graphics = new TextureRegion(texture);
-        rectangle = createBoundingRectangle(graphics);
-
-        tileMovement = new TileMovement(
-                groundLayer,
-                Interpolation.smooth
-        );
-
+    public Tank(int x, int y) {
         coordinates = new GridPoint2(x, y);
         destinationCoordinates = new GridPoint2(coordinates);
     }
 
-    public void move(Direction direction, Tree tree) {
-        if (!isEqual(movementProgress, 1f)) {
+    public boolean isMoving() {
+        return movementProgress < 1f;
+    }
+
+    public void turn(Direction direction) {
+        this.direction = direction;
+    }
+
+    public void startMoving(GridPoint2 destination) {
+        if (isMoving()) {
             return;
         }
 
-        GridPoint2 destination =
-                direction.destinationFrom(coordinates);
-
-        if (!tree.occupies(destination)) {
-            destinationCoordinates.set(destination);
-            movementProgress = 0f;
-        }
-
-        rotation = direction.getRotation();
+        destinationCoordinates.set(destination);
+        movementProgress = 0f;
     }
 
     public void update(float deltaTime) {
-        tileMovement.moveRectangleBetweenTileCenters(
-                rectangle,
-                coordinates,
-                destinationCoordinates,
-                movementProgress
+        if (!isMoving()) {
+            return;
+        }
+
+        movementProgress = Math.min(
+                1f,
+                movementProgress + deltaTime / MOVEMENT_DURATION
         );
 
-        movementProgress = continueProgress(
-                movementProgress,
-                deltaTime,
-                MOVEMENT_SPEED
-        );
-
-        if (isEqual(movementProgress, 1f)) {
+        if (!isMoving()) {
             coordinates.set(destinationCoordinates);
         }
     }
 
-    public void render(Batch batch) {
-        drawTextureRegionUnscaled(
-                batch,
-                graphics,
-                rectangle,
-                rotation
-        );
+    public GridPoint2 getCoordinates() {
+        return new GridPoint2(coordinates);
     }
 
-    @Override
-    public void dispose() {
-        texture.dispose();
+    public GridPoint2 getDestinationCoordinates() {
+        return new GridPoint2(destinationCoordinates);
+    }
+
+    public float getMovementProgress() {
+        return movementProgress;
+    }
+
+    public float getRotation() {
+        return direction.getRotation();
     }
 }

@@ -2,6 +2,7 @@ package ru.mipt.bit.platformer;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -14,52 +15,68 @@ public class GameDesktopLauncher implements ApplicationListener {
     private Batch batch;
 
     private GameField field;
-    private Tank tank;
-    private Tree tree;
+    private GameFieldGraphics fieldGraphics;
+    private TankGraphics tankGraphics;
+    private TreeGraphics treeGraphics;
+    private KeyboardInputHandler inputHandler;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
 
-        field = new GameField(batch);
+        field = new GameField();
+        fieldGraphics = new GameFieldGraphics(batch);
 
-        tank = new Tank(
-                field.getGroundLayer(),
-                1,
-                1
+        tankGraphics = new TankGraphics(
+                fieldGraphics.getGroundLayer()
         );
 
-        tree = new Tree(
-                field.getGroundLayer(),
-                1,
-                3
+        treeGraphics = new TreeGraphics(
+                fieldGraphics.getGroundLayer(),
+                field.getTree()
+        );
+
+        inputHandler = new KeyboardInputHandler();
+
+        inputHandler.register(
+                () -> field.moveTank(Direction.UP),
+                Input.Keys.UP,
+                Input.Keys.W
+        );
+
+        inputHandler.register(
+                () -> field.moveTank(Direction.LEFT),
+                Input.Keys.LEFT,
+                Input.Keys.A
+        );
+
+        inputHandler.register(
+                () -> field.moveTank(Direction.DOWN),
+                Input.Keys.DOWN,
+                Input.Keys.S
+        );
+
+        inputHandler.register(
+                () -> field.moveTank(Direction.RIGHT),
+                Input.Keys.RIGHT,
+                Input.Keys.D
         );
     }
 
     @Override
     public void render() {
-        // Clear the screen.
         Gdx.gl.glClearColor(0f, 0f, 0.2f, 1f);
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
 
-        float deltaTime = Gdx.graphics.getDeltaTime();
+        inputHandler.handle(Gdx.input::isKeyPressed);
+        field.update(Gdx.graphics.getDeltaTime());
 
-        // Read the keyboard and move the tank.
-        for (Direction direction : Direction.values()) {
-            if (direction.isPressed()) {
-                tank.move(direction, tree);
-            }
-        }
-
-        tank.update(deltaTime);
-
-        // Draw the field first, then the game objects.
-        field.render();
+        fieldGraphics.render();
 
         batch.begin();
 
-        tank.render(batch);
-        tree.render(batch);
+        tankGraphics.render(batch, field.getTank());
+        treeGraphics.render(batch);
 
         batch.end();
     }
@@ -81,9 +98,9 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     @Override
     public void dispose() {
-        tank.dispose();
-        tree.dispose();
-        field.dispose();
+        tankGraphics.dispose();
+        treeGraphics.dispose();
+        fieldGraphics.dispose();
         batch.dispose();
     }
 
@@ -91,8 +108,6 @@ public class GameDesktopLauncher implements ApplicationListener {
         Lwjgl3ApplicationConfiguration config =
                 new Lwjgl3ApplicationConfiguration();
 
-        // Level width: 10 tiles x 128 px.
-        // Level height: 8 tiles x 128 px.
         config.setWindowedMode(1280, 1024);
 
         new Lwjgl3Application(
