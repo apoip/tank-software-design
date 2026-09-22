@@ -1,36 +1,46 @@
 package ru.mipt.bit.platformer;
 
-import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.maps.MapRenderer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.math.GridPoint2;
 
-import static ru.mipt.bit.platformer.util.GdxGameUtils.*;
+public class GameField {
 
-public class GameField implements Disposable {
+    private final Tank tank;
+    private final Tree tree;
 
-    private final TiledMap level;
-    private final MapRenderer renderer;
-    private final TiledMapTileLayer groundLayer;
-
-    public GameField(Batch batch) {
-        level = new TmxMapLoader().load("level.tmx");
-        renderer = createSingleLayerMapRenderer(level, batch);
-        groundLayer = getSingleLayer(level);
+    public GameField() {
+        this(new Tank(1, 1), new Tree(1, 3));
     }
 
-    public TiledMapTileLayer getGroundLayer() {
-        return groundLayer;
+    public GameField(Tank tank, Tree tree) {
+        this.tank = tank;
+        this.tree = tree;
     }
 
-    public void render() {
-        renderer.render();
+    public void moveTank(Direction direction) {
+        if (tank.isMoving()) {
+            return;
+        }
+
+        tank.turn(direction);
+
+        GridPoint2 destination = direction.destinationFrom(
+                tank.getCoordinates()
+        );
+
+        if (!tree.occupies(destination)) {
+            tank.startMoving(destination);
+        }
     }
 
-    @Override
-    public void dispose() {
-        level.dispose();
+    public void update(float deltaTime) {
+        tank.update(deltaTime);
+    }
+
+    public Tank getTank() {
+        return tank;
+    }
+
+    public Tree getTree() {
+        return tree;
     }
 }
