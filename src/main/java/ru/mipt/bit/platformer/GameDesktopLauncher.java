@@ -7,9 +7,10 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Interpolation;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
@@ -17,6 +18,7 @@ import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 public class GameDesktopLauncher implements ApplicationListener {
 
     private static final String LEVEL_PATH = "level.tmx";
+    private static final String LEVEL_LAYOUT_PATH = "level-layout.txt";
     private static final String TANK_TEXTURE_PATH =
             "images/tank_blue.png";
     private static final String TREE_TEXTURE_PATH =
@@ -24,6 +26,11 @@ public class GameDesktopLauncher implements ApplicationListener {
     private static final float TANK_MOVEMENT_DURATION = 0.4f;
     private static final int WINDOW_WIDTH = 1280;
     private static final int WINDOW_HEIGHT = 1024;
+    private static final int FIELD_WIDTH = 10;
+    private static final int FIELD_HEIGHT = 8;
+    private static final int RANDOM_TREE_COUNT = 12;
+
+    private final String levelMode;
 
     private Batch batch;
 
@@ -32,32 +39,58 @@ public class GameDesktopLauncher implements ApplicationListener {
     private List<GameObjectGraphics> objectGraphics;
     private InputHandler inputHandler;
 
+    public GameDesktopLauncher() {
+        this("file");
+    }
+
+    public GameDesktopLauncher(String levelMode) {
+        this.levelMode = levelMode;
+    }
+
     @Override
     public void create() {
         batch = new SpriteBatch();
 
-        Tank tank = new Tank(1, 1, TANK_MOVEMENT_DURATION);
-        Tree tree = new Tree(1, 3);
+        LevelLayout layout = createLevelSource().createLevel();
+        GridPoint2 playerPosition = layout.getPlayerPosition();
+
+        Tank tank = new Tank(
+                playerPosition.x,
+                playerPosition.y,
+                TANK_MOVEMENT_DURATION
+        );
+
+        List<Tree> trees = new ArrayList<>();
+
+        for (GridPoint2 position : layout.getTreePositions()) {
+            trees.add(new Tree(position.x, position.y));
+        }
 
         field = new GameField(
                 tank,
-                Arrays.asList(tree)
+                trees
         );
         fieldGraphics = new GameFieldGraphics(batch, LEVEL_PATH);
 
-        objectGraphics = Arrays.asList(
+        objectGraphics = new ArrayList<>();
+        objectGraphics.add(
                 new TankGraphics(
                         fieldGraphics.getGroundLayer(),
                         tank,
                         TANK_TEXTURE_PATH,
                         Interpolation.smooth
-                ),
-                new TreeGraphics(
-                        fieldGraphics.getGroundLayer(),
-                        tree,
-                        TREE_TEXTURE_PATH
                 )
         );
+
+        for (Tree tree : trees) {
+            objectGraphics.add(
+                    new TreeGraphics(
+                            fieldGraphics.getGroundLayer(),
+                            tree,
+                            TREE_TEXTURE_PATH
+                    )
+            );
+        }
 
         inputHandler = new KeyboardInputHandler(
                 Gdx.input::isKeyPressed
@@ -85,6 +118,28 @@ public class GameDesktopLauncher implements ApplicationListener {
                 () -> field.moveTank(Direction.RIGHT),
                 Input.Keys.RIGHT,
                 Input.Keys.D
+        );
+    }
+
+    private LevelSource createLevelSource() {
+        if ("random".equalsIgnoreCase(levelMode)) {
+            return new RandomLevelSource(
+                    FIELD_WIDTH,
+                    FIELD_HEIGHT,
+                    RANDOM_TREE_COUNT
+            );
+        }
+
+        if ("file".equalsIgnoreCase(levelMode)) {
+            String levelText = Gdx.files
+                    .internal(LEVEL_LAYOUT_PATH)
+                    .readString("UTF-8");
+
+            return new FileLevelSource(levelText);
+        }
+
+        throw new IllegalArgumentException(
+                "Unknown level mode: " + levelMode
         );
     }
 
@@ -137,8 +192,10 @@ public class GameDesktopLauncher implements ApplicationListener {
 
         config.setWindowedMode(WINDOW_WIDTH, WINDOW_HEIGHT);
 
+        String levelMode = args.length == 0 ? "file" : args[0];
+
         new Lwjgl3Application(
-                new GameDesktopLauncher(),
+                new GameDesktopLauncher(levelMode),
                 config
         );
     }
