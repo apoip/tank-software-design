@@ -3,6 +3,7 @@ package ru.mipt.bit.platformer;
 import com.badlogic.gdx.math.GridPoint2;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -46,13 +47,13 @@ public class GameModelTest {
     }
 
     @Test
-    public void tankCompletesMovement() {
-        Tank tank = new Tank(1, 1);
+    public void tankUsesConfiguredMovementDuration() {
+        Tank tank = new Tank(1, 1, 0.8f);
 
         tank.turn(Direction.RIGHT);
         tank.startMoving(new GridPoint2(2, 1));
 
-        tank.update(0.2f);
+        tank.update(0.4f);
 
         assertTrue(tank.isMoving());
         assertEquals(
@@ -60,7 +61,7 @@ public class GameModelTest {
                 tank.getCoordinates()
         );
 
-        tank.update(0.2f);
+        tank.update(0.4f);
 
         assertFalse(tank.isMoving());
         assertEquals(
@@ -70,12 +71,16 @@ public class GameModelTest {
     }
 
     @Test
-    public void fieldDoesNotMoveTankIntoTree() {
-        Tank tank = new Tank(1, 1);
+    public void fieldDoesNotMoveTankIntoObstacle() {
+        Tank tank = new Tank(1, 1, 0.4f);
+
+        Obstacle obstacle = coordinates -> coordinates.equals(
+                new GridPoint2(1, 2)
+        );
 
         GameField field = new GameField(
                 tank,
-                new Tree(1, 2)
+                Collections.singletonList(obstacle)
         );
 
         field.moveTank(Direction.UP);
@@ -98,8 +103,9 @@ public class GameModelTest {
     public void inputHandlerRunsRegisteredActionOnce() {
         AtomicInteger calls = new AtomicInteger();
 
-        KeyboardInputHandler handler =
-                new KeyboardInputHandler();
+        InputHandler handler = new KeyboardInputHandler(
+                key -> key == 10 || key == 20
+        );
 
         handler.register(
                 calls::incrementAndGet,
@@ -107,9 +113,7 @@ public class GameModelTest {
                 20
         );
 
-        handler.handle(
-                key -> key == 10 || key == 20
-        );
+        handler.handle();
 
         assertEquals(1, calls.get());
     }

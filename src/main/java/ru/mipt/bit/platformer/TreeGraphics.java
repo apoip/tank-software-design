@@ -5,13 +5,12 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Disposable;
 
 import static ru.mipt.bit.platformer.util.GdxGameUtils.createBoundingRectangle;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.drawTextureRegionUnscaled;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.moveRectangleAtTileCenter;
 
-public class TreeGraphics implements Disposable {
+public class TreeGraphics implements GameObjectGraphics {
 
     private final Texture texture;
     private final TextureRegion graphics;
@@ -19,9 +18,10 @@ public class TreeGraphics implements Disposable {
 
     public TreeGraphics(
             TiledMapTileLayer groundLayer,
-            Tree tree
+            PositionedObject tree,
+            String texturePath
     ) {
-        texture = new Texture("images/greenTree.png");
+        texture = new Texture(texturePath);
         graphics = new TextureRegion(texture);
         rectangle = createBoundingRectangle(graphics);
 

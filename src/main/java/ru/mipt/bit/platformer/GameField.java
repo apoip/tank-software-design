@@ -2,18 +2,21 @@ package ru.mipt.bit.platformer;
 
 import com.badlogic.gdx.math.GridPoint2;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 public class GameField {
 
-    private final Tank tank;
-    private final Tree tree;
+    private final MovableObject tank;
+    private final List<Obstacle> obstacles;
 
-    public GameField() {
-        this(new Tank(1, 1), new Tree(1, 3));
-    }
-
-    public GameField(Tank tank, Tree tree) {
+    public GameField(
+            MovableObject tank,
+            Collection<? extends Obstacle> obstacles
+    ) {
         this.tank = tank;
-        this.tree = tree;
+        this.obstacles = new ArrayList<>(obstacles);
     }
 
     public void moveTank(Direction direction) {
@@ -27,20 +30,22 @@ public class GameField {
                 tank.getCoordinates()
         );
 
-        if (!tree.occupies(destination)) {
+        if (!isOccupied(destination)) {
             tank.startMoving(destination);
         }
     }
 
+    private boolean isOccupied(GridPoint2 coordinates) {
+        for (Obstacle obstacle : obstacles) {
+            if (obstacle.occupies(coordinates)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void update(float deltaTime) {
         tank.update(deltaTime);
-    }
-
-    public Tank getTank() {
-        return tank;
-    }
-
-    public Tree getTree() {
-        return tree;
     }
 }

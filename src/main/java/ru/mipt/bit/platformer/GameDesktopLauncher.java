@@ -7,36 +7,61 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Interpolation;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 
 public class GameDesktopLauncher implements ApplicationListener {
 
+    private static final String LEVEL_PATH = "level.tmx";
+    private static final String TANK_TEXTURE_PATH =
+            "images/tank_blue.png";
+    private static final String TREE_TEXTURE_PATH =
+            "images/greenTree.png";
+    private static final float TANK_MOVEMENT_DURATION = 0.4f;
+    private static final int WINDOW_WIDTH = 1280;
+    private static final int WINDOW_HEIGHT = 1024;
+
     private Batch batch;
 
     private GameField field;
     private GameFieldGraphics fieldGraphics;
-    private TankGraphics tankGraphics;
-    private TreeGraphics treeGraphics;
-    private KeyboardInputHandler inputHandler;
+    private List<GameObjectGraphics> objectGraphics;
+    private InputHandler inputHandler;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
 
-        field = new GameField();
-        fieldGraphics = new GameFieldGraphics(batch);
+        Tank tank = new Tank(1, 1, TANK_MOVEMENT_DURATION);
+        Tree tree = new Tree(1, 3);
 
-        tankGraphics = new TankGraphics(
-                fieldGraphics.getGroundLayer()
+        field = new GameField(
+                tank,
+                Arrays.asList(tree)
+        );
+        fieldGraphics = new GameFieldGraphics(batch, LEVEL_PATH);
+
+        objectGraphics = Arrays.asList(
+                new TankGraphics(
+                        fieldGraphics.getGroundLayer(),
+                        tank,
+                        TANK_TEXTURE_PATH,
+                        Interpolation.smooth
+                ),
+                new TreeGraphics(
+                        fieldGraphics.getGroundLayer(),
+                        tree,
+                        TREE_TEXTURE_PATH
+                )
         );
 
-        treeGraphics = new TreeGraphics(
-                fieldGraphics.getGroundLayer(),
-                field.getTree()
+        inputHandler = new KeyboardInputHandler(
+                Gdx.input::isKeyPressed
         );
-
-        inputHandler = new KeyboardInputHandler();
 
         inputHandler.register(
                 () -> field.moveTank(Direction.UP),
@@ -68,15 +93,16 @@ public class GameDesktopLauncher implements ApplicationListener {
         Gdx.gl.glClearColor(0f, 0f, 0.2f, 1f);
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
 
-        inputHandler.handle(Gdx.input::isKeyPressed);
+        inputHandler.handle();
         field.update(Gdx.graphics.getDeltaTime());
 
         fieldGraphics.render();
 
         batch.begin();
 
-        tankGraphics.render(batch, field.getTank());
-        treeGraphics.render(batch);
+        for (GameObjectGraphics graphics : objectGraphics) {
+            graphics.render(batch);
+        }
 
         batch.end();
     }
@@ -98,8 +124,9 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     @Override
     public void dispose() {
-        tankGraphics.dispose();
-        treeGraphics.dispose();
+        for (GameObjectGraphics graphics : objectGraphics) {
+            graphics.dispose();
+        }
         fieldGraphics.dispose();
         batch.dispose();
     }
@@ -108,7 +135,7 @@ public class GameDesktopLauncher implements ApplicationListener {
         Lwjgl3ApplicationConfiguration config =
                 new Lwjgl3ApplicationConfiguration();
 
-        config.setWindowedMode(1280, 1024);
+        config.setWindowedMode(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         new Lwjgl3Application(
                 new GameDesktopLauncher(),

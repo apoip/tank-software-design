@@ -5,15 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntPredicate;
 
-public class KeyboardInputHandler {
+public class KeyboardInputHandler implements InputHandler {
 
     private final List<KeyBinding> bindings = new ArrayList<>();
+    private final IntPredicate isKeyPressed;
 
+    public KeyboardInputHandler(IntPredicate isKeyPressed) {
+        this.isKeyPressed = isKeyPressed;
+    }
+
+    @Override
     public void register(Runnable action, int... keyCodes) {
         bindings.add(new KeyBinding(action, keyCodes));
     }
 
-    public void handle(IntPredicate isKeyPressed) {
+    @Override
+    public void handle() {
         for (KeyBinding binding : bindings) {
             if (binding.isPressed(isKeyPressed)) {
                 binding.run();
