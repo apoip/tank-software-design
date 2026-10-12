@@ -16,8 +16,8 @@ public class GameFieldGraphics implements Disposable {
     private final MapRenderer renderer;
     private final TiledMapTileLayer groundLayer;
 
-    public GameFieldGraphics(Batch batch) {
-        level = new TmxMapLoader().load("level.tmx");
+    public GameFieldGraphics(Batch batch, String levelPath) {
+        level = new TmxMapLoader().load(levelPath);
         renderer = createSingleLayerMapRenderer(level, batch);
         groundLayer = getSingleLayer(level);
     }
