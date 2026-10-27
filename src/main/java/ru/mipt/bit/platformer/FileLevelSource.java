@@ -10,6 +10,7 @@ public class FileLevelSource implements LevelSource {
 
     private static final char TREE = 'T';
     private static final char PLAYER = 'X';
+    private static final char TANK = 'A';
     private static final char EMPTY = '_';
 
     private final List<String> rows;
@@ -32,6 +33,7 @@ public class FileLevelSource implements LevelSource {
         int height = rows.size();
 
         GridPoint2 playerPosition = null;
+        List<GridPoint2> tankPositions = new ArrayList<>();
         List<GridPoint2> treePositions = new ArrayList<>();
 
         for (int rowIndex = 0; rowIndex < height; rowIndex++) {
@@ -50,6 +52,8 @@ public class FileLevelSource implements LevelSource {
 
                 if (cell == TREE) {
                     treePositions.add(new GridPoint2(x, y));
+                } else if (cell == TANK) {
+                    tankPositions.add(new GridPoint2(x, y));
                 } else if (cell == PLAYER) {
                     if (playerPosition != null) {
                         throw new IllegalArgumentException(
@@ -71,6 +75,12 @@ public class FileLevelSource implements LevelSource {
             );
         }
 
-        return new LevelLayout(playerPosition, treePositions);
+        return new LevelLayout(
+                width,
+                height,
+                playerPosition,
+                tankPositions,
+                treePositions
+        );
     }
 }

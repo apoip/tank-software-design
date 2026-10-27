@@ -8,18 +8,27 @@ import java.util.List;
 
 public class GameField {
 
-    private final MovableObject tank;
+    private final List<MovableObject> tanks;
     private final List<Obstacle> obstacles;
+    private final int width;
+    private final int height;
 
     public GameField(
-            MovableObject tank,
-            Collection<? extends Obstacle> obstacles
+            Collection<? extends MovableObject> tanks,
+            Collection<? extends Obstacle> obstacles,
+            int width,
+            int height
     ) {
-        this.tank = tank;
+        this.tanks = new ArrayList<>(tanks);
         this.obstacles = new ArrayList<>(obstacles);
+        this.width = width;
+        this.height = height;
     }
 
-    public void moveTank(Direction direction) {
+    public void moveTank(
+            MovableObject tank,
+            Direction direction
+    ) {
         if (tank.isMoving()) {
             return;
         }
@@ -30,12 +39,21 @@ public class GameField {
                 tank.getCoordinates()
         );
 
-        if (!isOccupied(destination)) {
+        if (isInside(destination)
+                && !isOccupiedByObstacle(destination)
+                && !isOccupiedByTank(destination, tank)) {
             tank.startMoving(destination);
         }
     }
 
-    private boolean isOccupied(GridPoint2 coordinates) {
+    private boolean isInside(GridPoint2 coordinates) {
+        return coordinates.x >= 0
+                && coordinates.x < width
+                && coordinates.y >= 0
+                && coordinates.y < height;
+    }
+
+    private boolean isOccupiedByObstacle(GridPoint2 coordinates) {
         for (Obstacle obstacle : obstacles) {
             if (obstacle.occupies(coordinates)) {
                 return true;
@@ -45,7 +63,32 @@ public class GameField {
         return false;
     }
 
+    private boolean isOccupiedByTank(
+            GridPoint2 coordinates,
+            MovableObject movingTank
+    ) {
+        for (MovableObject tank : tanks) {
+            if (tank == movingTank) {
+                continue;
+            }
+
+            if (tank.getCoordinates().equals(coordinates)) {
+                return true;
+            }
+
+            if (tank.isMoving()
+                    && tank.getDestinationCoordinates()
+                    .equals(coordinates)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void update(float deltaTime) {
-        tank.update(deltaTime);
+        for (MovableObject tank : tanks) {
+            tank.update(deltaTime);
+        }
     }
 }

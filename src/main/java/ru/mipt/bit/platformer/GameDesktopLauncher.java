@@ -29,6 +29,7 @@ public class GameDesktopLauncher implements ApplicationListener {
     private static final int FIELD_WIDTH = 10;
     private static final int FIELD_HEIGHT = 8;
     private static final int RANDOM_TREE_COUNT = 12;
+    private static final int RANDOM_TANK_COUNT = 4;
 
     private final String levelMode;
 
@@ -37,7 +38,7 @@ public class GameDesktopLauncher implements ApplicationListener {
     private GameField field;
     private GameFieldGraphics fieldGraphics;
     private List<GameObjectGraphics> objectGraphics;
-    private InputHandler inputHandler;
+    private List<TankControlStrategy> controlStrategies;
 
     public GameDesktopLauncher() {
         this("file");
@@ -54,11 +55,24 @@ public class GameDesktopLauncher implements ApplicationListener {
         LevelLayout layout = createLevelSource().createLevel();
         GridPoint2 playerPosition = layout.getPlayerPosition();
 
-        Tank tank = new Tank(
+        Tank playerTank = new Tank(
                 playerPosition.x,
                 playerPosition.y,
                 TANK_MOVEMENT_DURATION
         );
+
+        List<Tank> tanks = new ArrayList<>();
+        tanks.add(playerTank);
+
+        for (GridPoint2 position : layout.getTankPositions()) {
+            tanks.add(
+                    new Tank(
+                            position.x,
+                            position.y,
+                            TANK_MOVEMENT_DURATION
+                    )
+            );
+        }
 
         List<Tree> trees = new ArrayList<>();
 
@@ -67,20 +81,24 @@ public class GameDesktopLauncher implements ApplicationListener {
         }
 
         field = new GameField(
-                tank,
-                trees
+                tanks,
+                trees,
+                layout.getWidth(),
+                layout.getHeight()
         );
         fieldGraphics = new GameFieldGraphics(batch, LEVEL_PATH);
 
         objectGraphics = new ArrayList<>();
-        objectGraphics.add(
-                new TankGraphics(
-                        fieldGraphics.getGroundLayer(),
-                        tank,
-                        TANK_TEXTURE_PATH,
-                        Interpolation.smooth
-                )
-        );
+        for (Tank tank : tanks) {
+            objectGraphics.add(
+                    new TankGraphics(
+                            fieldGraphics.getGroundLayer(),
+                            tank,
+                            TANK_TEXTURE_PATH,
+                            Interpolation.smooth
+                    )
+            );
+        }
 
         for (Tree tree : trees) {
             objectGraphics.add(
@@ -92,33 +110,65 @@ public class GameDesktopLauncher implements ApplicationListener {
             );
         }
 
-        inputHandler = new KeyboardInputHandler(
-                Gdx.input::isKeyPressed
-        );
+        controlStrategies = new ArrayList<>();
 
-        inputHandler.register(
-                () -> field.moveTank(Direction.UP),
+        KeyboardTankControlStrategy playerControl =
+                new KeyboardTankControlStrategy(
+                        new KeyboardInputHandler(
+                                Gdx.input::isKeyPressed
+                        )
+                );
+
+        playerControl.register(
+                new MoveTankCommand(
+                        field,
+                        playerTank,
+                        Direction.UP
+                ),
                 Input.Keys.UP,
                 Input.Keys.W
         );
 
-        inputHandler.register(
-                () -> field.moveTank(Direction.LEFT),
+        playerControl.register(
+                new MoveTankCommand(
+                        field,
+                        playerTank,
+                        Direction.LEFT
+                ),
                 Input.Keys.LEFT,
                 Input.Keys.A
         );
 
-        inputHandler.register(
-                () -> field.moveTank(Direction.DOWN),
+        playerControl.register(
+                new MoveTankCommand(
+                        field,
+                        playerTank,
+                        Direction.DOWN
+                ),
                 Input.Keys.DOWN,
                 Input.Keys.S
         );
 
-        inputHandler.register(
-                () -> field.moveTank(Direction.RIGHT),
+        playerControl.register(
+                new MoveTankCommand(
+                        field,
+                        playerTank,
+                        Direction.RIGHT
+                ),
                 Input.Keys.RIGHT,
                 Input.Keys.D
         );
+
+        controlStrategies.add(playerControl);
+
+        for (int i = 1; i < tanks.size(); i++) {
+            controlStrategies.add(
+                    new RandomTankControlStrategy(
+                            field,
+                            tanks.get(i)
+                    )
+            );
+        }
     }
 
     private LevelSource createLevelSource() {
@@ -126,7 +176,8 @@ public class GameDesktopLauncher implements ApplicationListener {
             return new RandomLevelSource(
                     FIELD_WIDTH,
                     FIELD_HEIGHT,
-                    RANDOM_TREE_COUNT
+                    RANDOM_TREE_COUNT,
+                    RANDOM_TANK_COUNT
             );
         }
 
@@ -148,7 +199,10 @@ public class GameDesktopLauncher implements ApplicationListener {
         Gdx.gl.glClearColor(0f, 0f, 0.2f, 1f);
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
 
-        inputHandler.handle();
+        for (TankControlStrategy strategy : controlStrategies) {
+            strategy.handle();
+        }
+
         field.update(Gdx.graphics.getDeltaTime());
 
         fieldGraphics.render();
@@ -164,17 +218,14 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     @Override
     public void resize(int width, int height) {
-        // Do not react to window resizing.
     }
 
     @Override
     public void pause() {
-        // The game does not get paused.
     }
 
     @Override
     public void resume() {
-        // The game does not get paused.
     }
 
     @Override
