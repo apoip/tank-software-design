@@ -6,20 +6,20 @@ import java.util.Random;
 
 public class RandomTankControlStrategy implements TankControlStrategy {
 
-    private final MovableObject tank;
+    private final Tank tank;
     private final List<Command> commands;
     private final Random random;
 
     public RandomTankControlStrategy(
             GameField field,
-            MovableObject tank
+            Tank tank
     ) {
         this(field, tank, new Random());
     }
 
     RandomTankControlStrategy(
             GameField field,
-            MovableObject tank,
+            Tank tank,
             Random random
     ) {
         this.tank = tank;
@@ -31,14 +31,18 @@ public class RandomTankControlStrategy implements TankControlStrategy {
                     new MoveTankCommand(field, tank, direction)
             );
         }
+
+        commands.add(new ShootTankCommand(field, tank));
     }
 
     @Override
-    public void handle() {
-        if (tank.isMoving()) {
-            return;
+    public List<Command> createCommands() {
+        if (tank.isMoving() || !tank.isAlive()) {
+            return java.util.Collections.emptyList();
         }
 
-        commands.get(random.nextInt(commands.size())).execute();
+        return java.util.Collections.singletonList(
+                commands.get(random.nextInt(commands.size()))
+        );
     }
 }

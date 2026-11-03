@@ -245,6 +245,247 @@ public class GameModelTest {
     }
 
     @Test
+    public void keyboardStrategyCreatesCommandBeforeExecution() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.emptyList(),
+                3,
+                3
+        );
+        KeyboardTankControlStrategy strategy =
+                new KeyboardTankControlStrategy(
+                        new KeyboardInputHandler(key -> key == 10)
+                );
+        strategy.register(
+                new MoveTankCommand(
+                        field,
+                        tank,
+                        Direction.UP
+                ),
+                10
+        );
+
+        List<Command> commands = strategy.createCommands();
+
+        assertFalse(tank.isMoving());
+        assertEquals(1, commands.size());
+
+        commands.get(0).execute();
+
+        assertTrue(tank.isMoving());
+    }
+
+    @Test
+    public void shootCommandCreatesBulletInFrontOfTank() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.emptyList(),
+                5,
+                3
+        );
+        Command command = new ShootTankCommand(field, tank);
+
+        command.execute();
+
+        Bullet bullet = findBullet(field);
+        assertEquals(
+                new GridPoint2(2, 1),
+                bullet.getCoordinates()
+        );
+        assertEquals(Direction.RIGHT, bullet.getDirection());
+    }
+
+    @Test
+    public void bulletDamagesTankAndDisappears() {
+        Tank shooter = new Tank(0, 1, 0.4f);
+        Tank target = new Tank(2, 1, 0.4f);
+        GameField field = createField(
+                Arrays.asList(shooter, target),
+                Collections.emptyList(),
+                4,
+                3
+        );
+
+        field.shoot(shooter);
+        field.update(0.12f);
+
+        assertEquals(2, target.getHealth());
+        assertFalse(containsBullet(field));
+    }
+
+    @Test
+    public void adjacentTankReceivesDamageImmediately() {
+        Tank shooter = new Tank(1, 1, 0.4f);
+        Tank target = new Tank(2, 1, 0.4f);
+        GameField field = createField(
+                Arrays.asList(shooter, target),
+                Collections.emptyList(),
+                4,
+                3
+        );
+
+        field.shoot(shooter);
+
+        assertEquals(2, target.getHealth());
+        assertFalse(containsBullet(field));
+    }
+
+    @Test
+    public void destroyedTankIsRemovedFromField() {
+        Tank shooter = new Tank(1, 1, 0.4f);
+        Tank target = new Tank(2, 1, 0.4f, 1, 0.5f);
+        GameField field = createField(
+                Arrays.asList(shooter, target),
+                Collections.emptyList(),
+                4,
+                3
+        );
+
+        field.shoot(shooter);
+
+        assertFalse(field.getObjects().contains(target));
+    }
+
+    @Test
+    public void bulletDisappearsWhenItHitsTree() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        Tree tree = new Tree(2, 1);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.singletonList(tree),
+                4,
+                3
+        );
+
+        field.shoot(tank);
+
+        assertFalse(containsBullet(field));
+        assertTrue(field.getObjects().contains(tree));
+    }
+
+    @Test
+    public void bulletDisappearsAtLevelBoundary() {
+        Tank tank = new Tank(0, 1, 0.4f);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.emptyList(),
+                3,
+                3
+        );
+
+        field.shoot(tank);
+        field.update(0.12f);
+
+        assertFalse(containsBullet(field));
+    }
+
+    @Test
+    public void collidingBulletsBothDisappear() {
+        Tank leftTank = new Tank(0, 1, 0.4f);
+        Tank rightTank = new Tank(4, 1, 0.4f);
+        rightTank.turn(Direction.LEFT);
+        GameField field = createField(
+                Arrays.asList(leftTank, rightTank),
+                Collections.emptyList(),
+                5,
+                3
+        );
+
+        field.shoot(leftTank);
+        field.shoot(rightTank);
+        field.update(0.12f);
+
+        assertFalse(containsBullet(field));
+        assertEquals(3, leftTank.getHealth());
+        assertEquals(3, rightTank.getHealth());
+    }
+
+    @Test
+    public void tankMustReloadBeforeNextShot() {
+        Tank tank = new Tank(0, 1, 0.4f);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.emptyList(),
+                6,
+                3
+        );
+
+        field.shoot(tank);
+        int objectCount = field.getObjects().size();
+        field.shoot(tank);
+
+        assertEquals(objectCount, field.getObjects().size());
+
+        field.update(0.5f);
+        field.shoot(tank);
+
+        assertTrue(field.getObjects().size() > objectCount);
+    }
+
+    @Test
+    public void fieldObserverReceivesInitialAddAndRemoveEvents() {
+        Tank shooter = new Tank(1, 1, 0.4f);
+        Tank target = new Tank(2, 1, 0.4f, 1, 0.5f);
+        GameField field = createField(
+                Arrays.asList(shooter, target),
+                Collections.emptyList(),
+                4,
+                3
+        );
+        List<GameObject> added = new java.util.ArrayList<>();
+        List<GameObject> removed = new java.util.ArrayList<>();
+
+        field.addObserver(new GameFieldObserver() {
+            @Override
+            public void objectAdded(GameObject object) {
+                added.add(object);
+            }
+
+            @Override
+            public void objectRemoved(GameObject object) {
+                removed.add(object);
+            }
+        });
+
+        field.shoot(shooter);
+
+        assertTrue(added.contains(shooter));
+        assertTrue(added.contains(target));
+        assertTrue(removed.contains(target));
+        assertEquals(3, added.size());
+        assertEquals(2, removed.size());
+    }
+
+    @Test
+    public void randomStrategyCanChooseShootCommand() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        GameField field = createField(
+                Collections.singletonList(tank),
+                Collections.emptyList(),
+                5,
+                3
+        );
+        Random random = new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        };
+        TankControlStrategy strategy =
+                new RandomTankControlStrategy(
+                        field,
+                        tank,
+                        random
+                );
+
+        strategy.handle();
+
+        assertTrue(containsBullet(field));
+    }
+
+    @Test
     public void fileLevelSourceReadsPlayerTanksAndTrees() {
         LevelSource source = new FileLevelSource(
                 "T_A\n" +
@@ -319,5 +560,25 @@ public class GameModelTest {
     ) {
         assertTrue(position.x >= 0 && position.x < width);
         assertTrue(position.y >= 0 && position.y < height);
+    }
+
+    private Bullet findBullet(GameField field) {
+        for (GameObject object : field.getObjects()) {
+            if (object instanceof Bullet) {
+                return (Bullet) object;
+            }
+        }
+
+        throw new AssertionError("Bullet was not found");
+    }
+
+    private boolean containsBullet(GameField field) {
+        for (GameObject object : field.getObjects()) {
+            if (object instanceof Bullet) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

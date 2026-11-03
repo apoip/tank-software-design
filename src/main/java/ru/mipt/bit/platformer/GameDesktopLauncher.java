@@ -8,7 +8,6 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.GridPoint2;
-import com.badlogic.gdx.math.Interpolation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +18,6 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     private static final String LEVEL_PATH = "level.tmx";
     private static final String LEVEL_LAYOUT_PATH = "level-layout.txt";
-    private static final String TANK_TEXTURE_PATH =
-            "images/tank_blue.png";
-    private static final String TREE_TEXTURE_PATH =
-            "images/greenTree.png";
     private static final float TANK_MOVEMENT_DURATION = 0.4f;
     private static final int WINDOW_WIDTH = 1280;
     private static final int WINDOW_HEIGHT = 1024;
@@ -37,7 +32,6 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     private GameField field;
     private GameFieldGraphics fieldGraphics;
-    private List<GameObjectGraphics> objectGraphics;
     private List<TankControlStrategy> controlStrategies;
 
     public GameDesktopLauncher() {
@@ -86,29 +80,11 @@ public class GameDesktopLauncher implements ApplicationListener {
                 layout.getWidth(),
                 layout.getHeight()
         );
-        fieldGraphics = new GameFieldGraphics(batch, LEVEL_PATH);
-
-        objectGraphics = new ArrayList<>();
-        for (Tank tank : tanks) {
-            objectGraphics.add(
-                    new TankGraphics(
-                            fieldGraphics.getGroundLayer(),
-                            tank,
-                            TANK_TEXTURE_PATH,
-                            Interpolation.smooth
-                    )
-            );
-        }
-
-        for (Tree tree : trees) {
-            objectGraphics.add(
-                    new TreeGraphics(
-                            fieldGraphics.getGroundLayer(),
-                            tree,
-                            TREE_TEXTURE_PATH
-                    )
-            );
-        }
+        fieldGraphics = new GameFieldGraphics(
+                field,
+                batch,
+                LEVEL_PATH
+        );
 
         controlStrategies = new ArrayList<>();
 
@@ -159,6 +135,11 @@ public class GameDesktopLauncher implements ApplicationListener {
                 Input.Keys.D
         );
 
+        playerControl.register(
+                new ShootTankCommand(field, playerTank),
+                Input.Keys.SPACE
+        );
+
         controlStrategies.add(playerControl);
 
         for (int i = 1; i < tanks.size(); i++) {
@@ -199,20 +180,22 @@ public class GameDesktopLauncher implements ApplicationListener {
         Gdx.gl.glClearColor(0f, 0f, 0.2f, 1f);
         Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
 
+        List<Command> commands = new ArrayList<>();
+
         for (TankControlStrategy strategy : controlStrategies) {
-            strategy.handle();
+            commands.addAll(strategy.createCommands());
+        }
+
+        for (Command command : commands) {
+            command.execute();
         }
 
         field.update(Gdx.graphics.getDeltaTime());
 
-        fieldGraphics.render();
+        fieldGraphics.renderLevel();
 
         batch.begin();
-
-        for (GameObjectGraphics graphics : objectGraphics) {
-            graphics.render(batch);
-        }
-
+        fieldGraphics.renderObjects(batch);
         batch.end();
     }
 
@@ -230,9 +213,6 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     @Override
     public void dispose() {
-        for (GameObjectGraphics graphics : objectGraphics) {
-            graphics.dispose();
-        }
         fieldGraphics.dispose();
         batch.dispose();
     }
