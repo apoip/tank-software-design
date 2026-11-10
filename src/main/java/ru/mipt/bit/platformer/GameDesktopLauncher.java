@@ -142,6 +142,20 @@ public class GameDesktopLauncher implements ApplicationListener {
 
         controlStrategies.add(playerControl);
 
+        KeyboardTankControlStrategy interfaceControl =
+                new KeyboardTankControlStrategy(
+                        new KeyboardInputHandler(
+                                Gdx.input::isKeyJustPressed
+                        )
+                );
+        interfaceControl.register(
+                new ToggleHealthBarsCommand(
+                        fieldGraphics.getHealthBarVisibility()
+                ),
+                Input.Keys.L
+        );
+        controlStrategies.add(interfaceControl);
+
         for (int i = 1; i < tanks.size(); i++) {
             controlStrategies.add(
                     new RandomTankControlStrategy(

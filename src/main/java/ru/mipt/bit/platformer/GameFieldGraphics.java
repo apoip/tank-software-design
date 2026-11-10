@@ -27,6 +27,7 @@ public class GameFieldGraphics
     private final TiledMapTileLayer groundLayer;
     private final Map<GameObject, GameObjectGraphics> graphics;
     private final GameField field;
+    private final HealthBarVisibility healthBarVisibility;
 
     public GameFieldGraphics(
             GameField field,
@@ -38,6 +39,7 @@ public class GameFieldGraphics
         renderer = createSingleLayerMapRenderer(level, batch);
         groundLayer = getSingleLayer(level);
         graphics = new LinkedHashMap<>();
+        healthBarVisibility = new HealthBarVisibility();
         field.addObserver(this);
     }
 
@@ -61,11 +63,18 @@ public class GameFieldGraphics
 
     private GameObjectGraphics createGraphics(GameObject object) {
         if (object instanceof Tank) {
-            return new TankGraphics(
+            Tank tank = (Tank) object;
+
+            return new HealthBarGraphicsDecorator(
+                    new TankGraphics(
+                            groundLayer,
+                            tank,
+                            TANK_TEXTURE_PATH,
+                            Interpolation.smooth
+                    ),
                     groundLayer,
-                    (Tank) object,
-                    TANK_TEXTURE_PATH,
-                    Interpolation.smooth
+                    tank,
+                    healthBarVisibility
             );
         }
 
@@ -96,6 +105,10 @@ public class GameFieldGraphics
                 : graphics.values()) {
             objectGraphics.render(batch);
         }
+    }
+
+    public HealthBarVisibility getHealthBarVisibility() {
+        return healthBarVisibility;
     }
 
     @Override

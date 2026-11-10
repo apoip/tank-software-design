@@ -4,13 +4,14 @@ import com.badlogic.gdx.math.GridPoint2;
 
 public class Tank implements MovableObject, GameObject {
 
-    private static final int DEFAULT_HEALTH = 3;
+    private static final int DEFAULT_HEALTH = 100;
     private static final float DEFAULT_RELOAD_DURATION = 0.5f;
 
     private final GridPoint2 coordinates;
     private final GridPoint2 destinationCoordinates;
     private final float movementDuration;
     private final float reloadDuration;
+    private final int maxHealth;
 
     private float movementProgress = 1f;
     private float reloadTime;
@@ -56,6 +57,7 @@ public class Tank implements MovableObject, GameObject {
         destinationCoordinates = new GridPoint2(coordinates);
         this.movementDuration = movementDuration;
         this.health = health;
+        maxHealth = health;
         this.reloadDuration = reloadDuration;
     }
 
@@ -117,7 +119,7 @@ public class Tank implements MovableObject, GameObject {
             );
         }
 
-        health -= damage;
+        health = Math.max(0, health - damage);
     }
 
     public boolean isAlive() {
@@ -126,6 +128,10 @@ public class Tank implements MovableObject, GameObject {
 
     public int getHealth() {
         return health;
+    }
+
+    public int getMaxHealth() {
+        return maxHealth;
     }
 
     public Direction getDirection() {

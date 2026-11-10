@@ -64,6 +64,14 @@ public class GameModelTest {
     }
 
     @Test
+    public void tankStartsWithOneHundredHealth() {
+        Tank tank = new Tank(1, 1, 0.4f);
+
+        assertEquals(100, tank.getHealth());
+        assertEquals(100, tank.getMaxHealth());
+    }
+
+    @Test
     public void fieldDoesNotMoveTankIntoObstacle() {
         Tank tank = new Tank(1, 1, 0.4f);
         Obstacle obstacle = coordinates -> coordinates.equals(
@@ -311,7 +319,7 @@ public class GameModelTest {
         field.shoot(shooter);
         field.update(0.12f);
 
-        assertEquals(2, target.getHealth());
+        assertEquals(99, target.getHealth());
         assertFalse(containsBullet(field));
     }
 
@@ -328,7 +336,7 @@ public class GameModelTest {
 
         field.shoot(shooter);
 
-        assertEquals(2, target.getHealth());
+        assertEquals(99, target.getHealth());
         assertFalse(containsBullet(field));
     }
 
@@ -398,8 +406,8 @@ public class GameModelTest {
         field.update(0.12f);
 
         assertFalse(containsBullet(field));
-        assertEquals(3, leftTank.getHealth());
-        assertEquals(3, rightTank.getHealth());
+        assertEquals(100, leftTank.getHealth());
+        assertEquals(100, rightTank.getHealth());
     }
 
     @Test
@@ -483,6 +491,21 @@ public class GameModelTest {
         strategy.handle();
 
         assertTrue(containsBullet(field));
+    }
+
+    @Test
+    public void toggleHealthBarsCommandChangesVisibility() {
+        HealthBarVisibility visibility =
+                new HealthBarVisibility();
+        Command command = new ToggleHealthBarsCommand(visibility);
+
+        assertFalse(visibility.isVisible());
+
+        command.execute();
+        assertTrue(visibility.isVisible());
+
+        command.execute();
+        assertFalse(visibility.isVisible());
     }
 
     @Test
