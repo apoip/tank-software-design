@@ -2,10 +2,15 @@ package ru.mipt.bit.platformer;
 
 import com.badlogic.gdx.math.GridPoint2;
 
+/**
+ * Domain entity representing a tank and its current state.
+ */
 public class Tank implements MovableObject, GameObject {
 
     private static final int DEFAULT_HEALTH = 100;
     private static final float DEFAULT_RELOAD_DURATION = 0.5f;
+    private static final float MEDIUM_STATE_MAX_HEALTH_RATIO = 0.70f;
+    private static final float MEDIUM_STATE_MIN_HEALTH_RATIO = 0.15f;
 
     private final GridPoint2 coordinates;
     private final GridPoint2 destinationCoordinates;
@@ -17,6 +22,7 @@ public class Tank implements MovableObject, GameObject {
     private float reloadTime;
     private Direction direction = Direction.RIGHT;
     private int health;
+    private TankState state;
 
     public Tank(int x, int y, float movementDuration) {
         this(
@@ -59,6 +65,7 @@ public class Tank implements MovableObject, GameObject {
         this.health = health;
         maxHealth = health;
         this.reloadDuration = reloadDuration;
+        updateState();
     }
 
     @Override
@@ -91,7 +98,8 @@ public class Tank implements MovableObject, GameObject {
 
         movementProgress = Math.min(
                 1f,
-                movementProgress + deltaTime / movementDuration
+                movementProgress + deltaTime
+                        / state.getMovementDuration(movementDuration)
         );
 
         if (!isMoving()) {
@@ -105,7 +113,10 @@ public class Tank implements MovableObject, GameObject {
     }
 
     public boolean canShoot() {
-        return reloadTime == 0f && !isMoving() && isAlive();
+        return reloadTime == 0f
+                && !isMoving()
+                && isAlive()
+                && state.canShoot();
     }
 
     public void reload() {
@@ -120,6 +131,19 @@ public class Tank implements MovableObject, GameObject {
         }
 
         health = Math.max(0, health - damage);
+        updateState();
+    }
+
+    private void updateState() {
+        float healthRatio = (float) health / maxHealth;
+
+        if (healthRatio > MEDIUM_STATE_MAX_HEALTH_RATIO) {
+            state = new LightTankState();
+        } else if (healthRatio >= MEDIUM_STATE_MIN_HEALTH_RATIO) {
+            state = new MediumTankState();
+        } else {
+            state = new HeavyTankState();
+        }
     }
 
     public boolean isAlive() {
@@ -132,6 +156,10 @@ public class Tank implements MovableObject, GameObject {
 
     public int getMaxHealth() {
         return maxHealth;
+    }
+
+    public TankState getState() {
+        return state;
     }
 
     public Direction getDirection() {

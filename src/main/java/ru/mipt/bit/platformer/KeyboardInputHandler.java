@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntPredicate;
 
+/**
+ * Infrastructure adapter that maps keyboard state to registered actions.
+ */
 public class KeyboardInputHandler implements InputHandler {
 
     private final List<KeyBinding> bindings = new ArrayList<>();

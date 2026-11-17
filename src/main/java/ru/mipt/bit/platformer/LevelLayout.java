@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Domain value object describing the initial level layout.
+ */
 public class LevelLayout {
 
     private final int width;

@@ -13,6 +13,9 @@ import ru.mipt.bit.platformer.util.TileMovement;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.createBoundingRectangle;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.drawTextureRegionUnscaled;
 
+/**
+ * Infrastructure adapter that renders a bullet with LibGDX.
+ */
 public class BulletGraphics implements GameObjectGraphics {
 
     private static final int TEXTURE_SIZE = 18;

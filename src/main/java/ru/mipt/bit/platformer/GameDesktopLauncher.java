@@ -14,6 +14,9 @@ import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
 
+/**
+ * Infrastructure composition root that connects ports and adapters.
+ */
 public class GameDesktopLauncher implements ApplicationListener {
 
     private static final String LEVEL_PATH = "level.tmx";

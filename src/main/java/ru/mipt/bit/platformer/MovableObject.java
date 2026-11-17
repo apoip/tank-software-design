@@ -2,6 +2,9 @@ package ru.mipt.bit.platformer;
 
 import com.badlogic.gdx.math.GridPoint2;
 
+/**
+ * Domain interface for an object that moves between field cells.
+ */
 public interface MovableObject extends PositionedObject {
 
     boolean isMoving();

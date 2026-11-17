@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Domain service that applies the rules of the game field.
+ */
 public class GameField {
 
     private static final float BULLET_MOVEMENT_DURATION = 0.12f;

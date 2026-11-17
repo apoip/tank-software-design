@@ -14,6 +14,9 @@ import java.util.Map;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.createSingleLayerMapRenderer;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.getSingleLayer;
 
+/**
+ * Infrastructure adapter that renders field events with LibGDX.
+ */
 public class GameFieldGraphics
         implements Disposable, GameFieldObserver {
 

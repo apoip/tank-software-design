@@ -10,6 +10,9 @@ import static ru.mipt.bit.platformer.util.GdxGameUtils.createBoundingRectangle;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.drawTextureRegionUnscaled;
 import static ru.mipt.bit.platformer.util.GdxGameUtils.moveRectangleAtTileCenter;
 
+/**
+ * Infrastructure adapter that renders a tree with LibGDX.
+ */
 public class TreeGraphics implements GameObjectGraphics {
 
     private final Texture texture;

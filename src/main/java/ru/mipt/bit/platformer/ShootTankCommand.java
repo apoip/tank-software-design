@@ -1,5 +1,8 @@
 package ru.mipt.bit.platformer;
 
+/**
+ * Application use case for shooting from a tank.
+ */
 public class ShootTankCommand implements Command {
 
     private final GameField field;

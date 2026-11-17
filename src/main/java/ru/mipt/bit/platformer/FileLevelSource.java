@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Infrastructure adapter that converts text into a level layout.
+ */
 public class FileLevelSource implements LevelSource {
 
     private static final char TREE = 'T';

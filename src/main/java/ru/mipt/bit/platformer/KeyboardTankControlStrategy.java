@@ -3,6 +3,9 @@ package ru.mipt.bit.platformer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Input adapter that creates commands from keyboard actions.
+ */
 public class KeyboardTankControlStrategy implements TankControlStrategy {
 
     private final InputHandler inputHandler;

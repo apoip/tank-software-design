@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Input adapter that creates commands for an AI-controlled tank.
+ */
 public class RandomTankControlStrategy implements TankControlStrategy {
 
     private final Tank tank;

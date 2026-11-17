@@ -1,5 +1,8 @@
 package ru.mipt.bit.platformer;
 
+/**
+ * Application use case for moving a tank.
+ */
 public class MoveTankCommand implements Command {
 
     private final GameField field;

@@ -1,5 +1,8 @@
 package ru.mipt.bit.platformer;
 
+/**
+ * Application use case for toggling health-bar visibility.
+ */
 public class ToggleHealthBarsCommand implements Command {
 
     private final HealthBarVisibility visibility;

@@ -8,6 +8,9 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Interpolation;
 
+/**
+ * Infrastructure adapter that decorates tank graphics with a health bar.
+ */
 public class HealthBarGraphicsDecorator
         implements GameObjectGraphics {
 

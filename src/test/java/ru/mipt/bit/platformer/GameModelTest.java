@@ -69,6 +69,64 @@ public class GameModelTest {
 
         assertEquals(100, tank.getHealth());
         assertEquals(100, tank.getMaxHealth());
+        assertTrue(tank.getState() instanceof LightTankState);
+    }
+
+    @Test
+    public void tankChangesStateAtHealthBoundaries() {
+        Tank tank = new Tank(1, 1, 0.4f);
+
+        tank.takeDamage(29);
+        assertTrue(tank.getState() instanceof LightTankState);
+
+        tank.takeDamage(1);
+        assertTrue(tank.getState() instanceof MediumTankState);
+
+        tank.takeDamage(55);
+        assertTrue(tank.getState() instanceof MediumTankState);
+
+        tank.takeDamage(1);
+        assertTrue(tank.getState() instanceof HeavyTankState);
+    }
+
+    @Test
+    public void mediumTankMovesTwiceAsSlowly() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        tank.takeDamage(30);
+
+        tank.startMoving(new GridPoint2(2, 1));
+        tank.update(0.4f);
+
+        assertTrue(tank.isMoving());
+        assertEquals(0.5f, tank.getMovementProgress(), 0.0001f);
+
+        tank.update(0.4f);
+
+        assertFalse(tank.isMoving());
+        assertEquals(new GridPoint2(2, 1), tank.getCoordinates());
+    }
+
+    @Test
+    public void heavyTankMovesThreeTimesAsSlowlyAndCannotShoot() {
+        Tank tank = new Tank(1, 1, 0.4f);
+        tank.takeDamage(86);
+
+        assertFalse(tank.canShoot());
+
+        tank.startMoving(new GridPoint2(2, 1));
+        tank.update(0.8f);
+
+        assertTrue(tank.isMoving());
+        assertEquals(
+                2f / 3f,
+                tank.getMovementProgress(),
+                0.0001f
+        );
+
+        tank.update(0.41f);
+
+        assertFalse(tank.isMoving());
+        assertEquals(new GridPoint2(2, 1), tank.getCoordinates());
     }
 
     @Test

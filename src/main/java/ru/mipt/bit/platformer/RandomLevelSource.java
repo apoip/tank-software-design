@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Infrastructure adapter that generates a level layout.
+ */
 public class RandomLevelSource implements LevelSource {
 
     private final int width;

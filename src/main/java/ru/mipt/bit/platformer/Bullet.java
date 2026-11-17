@@ -2,6 +2,9 @@ package ru.mipt.bit.platformer;
 
 import com.badlogic.gdx.math.GridPoint2;
 
+/**
+ * Domain entity representing a bullet.
+ */
 public class Bullet implements GameObject {
 
     private final GridPoint2 coordinates;
